@@ -1,39 +1,55 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { StreamProvider } from "@/providers/StreamProvider";
+import { ChatProvider } from "@/providers/ChatProvider";
+import { SettingsProvider } from "@/providers/SettingsProvider";
+import AppErrorBoundary from "@/components/ErrorBoundary";
 
-export default function Layout() {
+SplashScreen.preventAutoHideAsync();
+
+function RootLayoutNav() {
   return (
-    <Tabs screenOptions={{
-      tabBarActiveTintColor: '#6366f1',
-    }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
-        }}
+    <Stack screenOptions={{ headerBackTitle: "Back" }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="settings"
+        options={{ headerShown: true, headerTintColor: '#fff', headerStyle: { backgroundColor: '#0b0b0d' }, presentation: "modal", title: 'Settings' }}
       />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: 'Discover',
-          tabBarIcon: ({ color }) => <Ionicons name="search" size={24} color={color} />,
-        }}
+      <Stack.Screen
+        name="stream/[streamId]"
+        options={{ headerShown: false, presentation: "fullScreenModal" }}
       />
-      <Tabs.Screen
-        name="live"
-        options={{
-          title: 'Live',
-          tabBarIcon: ({ color }) => <Ionicons name="radio" size={24} color={color} />,
-        }}
+      <Stack.Screen
+        name="go-live"
+        options={{ headerShown: false, presentation: "modal" }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
-        }}
-      />
-    </Tabs>
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SettingsProvider>
+        <AuthProvider>
+          <StreamProvider>
+            <ChatProvider>
+              <AppErrorBoundary>
+                <RootLayoutNav />
+              </AppErrorBoundary>
+            </ChatProvider>
+          </StreamProvider>
+        </AuthProvider>
+      </SettingsProvider>
+    </GestureHandlerRootView>
   );
 }
