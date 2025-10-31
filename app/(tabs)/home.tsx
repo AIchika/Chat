@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList, useWindowDimensions, Platform, Share } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList, useWindowDimensions, Platform, Share, Animated, LayoutAnimation } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Users, Share2, VolumeX, MoreVertical, Maximize2, Plus, Check } from "lucide-react-native";
 import { router } from "expo-router";
@@ -13,6 +13,7 @@ const avatarUrl = (name: string) =>
 export default function HomeScreen() {
   const { liveStreams } = useStreams();
   const { height, width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [mode, setMode] = useState<"browse" | "feed">("feed");
   const listRef = useRef<FlatList<any> | null>(null);
@@ -44,9 +45,7 @@ export default function HomeScreen() {
     const isFullscreen = fullscreenIndex === index;
     const boxHeight = isFullscreen ? feedHeight : Math.min(feedHeight * 0.65, 620);
     const boxWidth = isFullscreen ? feedWidth : Math.min(feedWidth * 0.96, 900);
-    const chipsBarTop = 6;
-    const chipsBarHeight = 48;
-    const desiredTop = isFullscreen ? 0 : chipsBarTop + chipsBarHeight + 18;
+    // Center the live preview perfectly with balanced spacing
     return (
       <View
         style={[styles.feedItem, { width: feedWidth, height: feedHeight }]}
@@ -59,7 +58,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => router.push(`/stream/${item.id}`)}
-            style={[styles.streamBox, { width: boxWidth, height: boxHeight, position: 'absolute', top: desiredTop, borderRadius: isFullscreen ? 0 : 28 }]}
+            style={[styles.streamBox, { width: boxWidth, height: boxHeight, borderRadius: isFullscreen ? 0 : 28, margin: isFullscreen ? 0 : 16 }]}
             testID={`stream-box-${item.id}`}
           >
             <Image source={{ uri: item.thumbnail }} style={styles.streamBoxImage} />
@@ -75,83 +74,42 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Bottom-right Follow Avatar (replaces old controls) */}
         {!isFullscreen && (
-          <View style={styles.feedActionsColumn}>
+          <View style={styles.followAvatarContainer}>
             <TouchableOpacity
-              style={styles.feedActionBtn}
+              accessibilityRole="button"
+              accessibilityState={{ selected: followedIds.includes(String(item.id)) }}
+              activeOpacity={0.8}
               onPress={() => {
-                setMutedIds((prev) => prev.includes(String(item.id)) ? prev.filter((id) => id !== String(item.id)) : [...prev, String(item.id)]);
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setFollowedIds((prev) => prev.includes(String(item.id)) ? prev.filter((id) => id !== String(item.id)) : [...prev, String(item.id)]);
               }}
-              testID={`feed-mute-${item.id}`}
+              style={styles.followAvatarWrap}
+              testID={`feed-follow-avatar-${item.id}`}
             >
-              <VolumeX size={18} color={isMuted ? '#FF8A00' : '#fff'} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.feedActionBtn}
-              onPress={async () => {
-                try {
-                  await Share.share({ message: `${item.title} by ${item.streamer}`, url: item.thumbnail, title: item.title });
-                } catch (e: unknown) {
-                  console.log('Share error', e);
-                }
-              }}
-              testID={`feed-share-${item.id}`}
-            >
-              <Share2 size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.feedActionBtn}
-              onPress={async () => {
-                const toggle = fullscreenIndex === index ? null : index;
-                setFullscreenIndex(toggle);
-                if (Platform.OS !== 'web') {
-                  try {
-                    if (toggle !== null) {
-                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-                    } else {
-                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-                    }
-                  } catch (e) {
-                    console.log('Orientation lock error', e);
-                  }
-                } else {
-                  console.log('Fullscreen simulated on web');
-                }
-              }}
-              testID={`feed-fullscreen-${item.id}`}
-            >
-              <Maximize2 size={18} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.feedActionBtn} onPress={() => router.push(`/stream/${item.id}`)} testID={`feed-more-${item.id}`}>
-              <MoreVertical size={18} color="#fff" />
+              <Image source={{ uri: avatarUrl(item.streamer) }} style={styles.followAvatar} />
+              <View style={[styles.followBadge, followedIds.includes(String(item.id)) ? styles.followBadgeGood : styles.followBadgePlus]}>
+                {followedIds.includes(String(item.id)) ? (
+                  <Check size={24} color="#0b0b0d" />
+                ) : (
+                  <Plus size={24} color="#0b0b0d" />
+                )}
+              </View>
             </TouchableOpacity>
           </View>
         )}
 
-
+        {/* Left-side information layout */}
         {!isFullscreen && (
-          <View style={styles.feedProfileRow}>
-            <View style={styles.avatarWrap}>
-              <Image source={{ uri: avatarUrl(item.streamer) }} style={styles.feedAvatar} />
-              <TouchableOpacity
-                accessibilityRole="button"
-                accessibilityState={{ selected: followedIds.includes(String(item.id)) }}
-                onPress={() => {
-                  setFollowedIds((prev) => prev.includes(String(item.id)) ? prev.filter((id) => id !== String(item.id)) : [...prev, String(item.id)]);
-                }}
-                style={[styles.avatarBadge, followedIds.includes(String(item.id)) ? styles.avatarBadgeFollowed : undefined]}
-                testID={`feed-follow-${item.id}`}
-              >
-                {followedIds.includes(String(item.id)) ? (
-                  <Check size={14} color="#fff" />
-                ) : (
-                  <Plus size={14} color="#0b0b0d" />
-                )}
-              </TouchableOpacity>
+          <View style={styles.feedInfoBlock}>
+            <View style={styles.feedInfoRow}>
+              <Text style={styles.userName} numberOfLines={1}>@{item.streamer}</Text>
+              {/* Removed duplicate avatar as it's already shown in the follow button */}
             </View>
-            <View style={styles.feedTextWrap}>
+            <View style={styles.feedInfoTexts}>
               <Text numberOfLines={1} style={styles.feedTitle}>{item.title}</Text>
-              <Text numberOfLines={1} style={styles.feedMeta}>@{item.streamer} • {item.category}</Text>
+              <Text numberOfLines={1} style={styles.feedDescription}>{item.description ?? item.category}</Text>
             </View>
           </View>
         )}
@@ -198,52 +156,55 @@ export default function HomeScreen() {
     if (fullscreenIndex !== null && fullscreenIndex !== idx) {
       setFullscreenIndex(null);
       if (Platform.OS !== 'web') {
-        void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch((e) => console.log('Orientation reset error', e));
+        try {
+          void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        } catch (e) {
+          console.log('Orientation lock error', e);
+        }
       }
     }
   }).current;
 
-  if (mode === "feed") {
+  if (mode === "browse") {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={["top"]} style={styles.safeArea}>
-          <FlatList
-            ref={listRef}
-            data={filtered}
-            keyExtractor={keyExtractor}
-            renderItem={renderFeedItem}
-            extraData={{ mutedIds, followedIds, fullscreenIndex, selectedCategory }}
-            pagingEnabled
-            snapToInterval={height}
-            decelerationRate={Platform.OS === "ios" ? "fast" : 0.98}
-            disableIntervalMomentum
-            bounces={false}
-            snapToAlignment="start"
-            getItemLayout={(data, index) => ({ length: height, offset: height * index, index })}
-            showsVerticalScrollIndicator={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-            removeClippedSubviews
-            ListHeaderComponent={null}
-            ListEmptyComponent={(
-              <View style={{ height, alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "#c9ced6", fontSize: 16, marginBottom: 12 }}>
-                  No streams in {selectedCategory}
-                </Text>
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <TouchableOpacity
-                    onPress={() => setSelectedCategory("All")}
-                    style={[styles.categoryChip, styles.categoryChipActive]}
-                    testID="empty-cta-all"
-                  >
-                    <Text style={[styles.categoryChipText, styles.categoryChipTextActive]}>See All</Text>
-                  </TouchableOpacity>
+          <View style={styles.hero}>
+            <View style={[styles.heroHeader, { paddingTop: insets.top + 12 }]}>
+              <Text style={styles.heroTitle}>Explore</Text>
+              <TouchableOpacity style={styles.clipsButton} onPress={() => router.push('/clips')} testID="clips-button">
+                <Users size={20} color="#0b0b0d" />
+                <Text style={styles.clipsText}>Clips</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsRow}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <View key={i} style={styles.cardWrap}>
+                  <View style={styles.card}>
+                    <Image source={{ uri: `https://picsum.photos/400/300?random=${i}` }} style={styles.cardImage} />
+                    <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.cardOverlay} />
+                    <View style={styles.cardBadge}>
+                      <Users size={12} color="#0b0b0d" />
+                      <Text style={styles.cardBadgeText}>Trending</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Image source={{ uri: avatarUrl("pro") }} style={styles.avatar} />
+                      <View style={styles.detailTextWrap}>
+                        <Text style={styles.cardTitle}>Pro stream</Text>
+                        <Text style={styles.cardMeta}>#gaming</Text>
+                      </View>
+                      <View style={styles.livePill}>
+                        <Text style={styles.livePillText}>LIVE</Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            )}
-            testID="feed-list"
-          />
-          <View style={styles.categoriesBar}>
+              ))}
+            </ScrollView>
+          </View>
+
+          <View style={[styles.categoriesBar, { top: insets.top + 6 }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryChips}>
               {categories.map((c) => {
                 const active = c === selectedCategory;
@@ -295,7 +256,7 @@ export default function HomeScreen() {
           )}
           testID="feed-list"
         />
-        <View style={styles.categoriesBar}>
+        <View style={[styles.categoriesBar, { top: insets.top + 6 }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryChips}>
             {categories.map((c) => {
               const active = c === selectedCategory;
@@ -344,7 +305,7 @@ const styles = StyleSheet.create({
   cardWrap: { width: 280, marginHorizontal: 4 },
   card: {
     width: "100%",
-    height: 180,
+    height: 200,
     borderRadius: 14,
     overflow: "hidden",
     backgroundColor: "#111",
@@ -385,7 +346,7 @@ const styles = StyleSheet.create({
 
   section: { paddingHorizontal: 16, paddingVertical: 16 },
 
-  categoryChips: { paddingHorizontal: 8, gap: 8, paddingBottom: 12 },
+  categoryChips: { paddingHorizontal: 8, gap: 8, paddingBottom: 16 },
   categoryChip: {
     backgroundColor: "rgba(255, 138, 0, 0.18)",
     paddingHorizontal: 12,
@@ -409,12 +370,11 @@ const styles = StyleSheet.create({
   idleCta: { backgroundColor: '#FF8A00', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   idleCtaText: { color: '#0b0b0d', fontSize: 12, fontWeight: '800' },
 
-  // Fullscreen feed styles
   feedItem: { position: "relative", overflow: "hidden" },
   feedBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" },
   feedGradient: { position: "absolute", left: 0, right: 0, bottom: 0, top: 0 },
   feedTopRow: { position: "absolute", top: 12, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  feedTopRowBelowChips: { position: "absolute", top: 56, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  feedTopRowBelowChips: { position: "absolute", top: 90, left: 12, right: 12, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   centerBoxWrap: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' },
   streamBox: { borderRadius: 28, overflow: 'hidden', backgroundColor: '#111', borderWidth: 1, borderColor: 'rgba(255,138,0,0.35)' },
   streamBoxImage: { width: '100%', height: '100%', resizeMode: 'cover' as const },
@@ -432,8 +392,23 @@ const styles = StyleSheet.create({
   feedTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
   feedMeta: { color: "#c9ced6", fontSize: 13, marginTop: 2 },
 
-  // Floating categories bar for feed mode
-  categoriesBar: { position: "absolute", top: 6, left: 0, right: 0 },
+  // Follow avatar styles
+  followAvatarContainer: { position: 'absolute', right: 12, bottom: 100 },
+  followAvatarWrap: { width: 56, height: 56, borderRadius: 28, overflow: 'hidden', backgroundColor: '#0b0b0d', borderWidth: 2, borderColor: '#FF8A00' },
+  followAvatar: { width: '100%', height: '100%' },
+  followBadge: { position: 'absolute', left: 16, top: 16, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  followBadgePlus: { backgroundColor: '#FF8A00' },
+  followBadgeGood: { backgroundColor: '#22c55e' },
+
+  // Left-side feed info block styles
+  feedInfoBlock: { position: 'absolute', left: 12, right: 120, bottom: 100, gap: 16 },
+  feedInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  userName: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  infoAvatar: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderColor: '#FF8A00' },
+  feedInfoTexts: { marginTop: 8 },
+  feedDescription: { color: '#c9ced6', fontSize: 14 },
+
+  categoriesBar: { position: "absolute", left: 0, right: 0 },
 
   feedActionsColumn: { position: 'absolute', right: 12, bottom: 100, alignItems: 'center', gap: 10 },
   feedActionBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },

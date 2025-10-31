@@ -51,9 +51,14 @@ class ChattSocket {
 
   connect() {
     try {
-      this.socket = io('http://localhost:5001', {
+      const baseUrl = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhost:5001';
+      this.socket = io(baseUrl, {
         transports: ['websocket'],
         timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
       });
 
       this.socket.on('connect', () => {

@@ -105,7 +105,7 @@ export default function DiscoverScreen() {
               {/* Popular Categories */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Star size={20} color="#FF8A00" />
+                  <Star size={20} color="#4F46E5" />
                   <Text style={styles.sectionTitle}>Popular Categories</Text>
                 </View>
                 <View style={styles.categoryGrid}>
@@ -132,7 +132,7 @@ export default function DiscoverScreen() {
               {/* Recent Streams */}
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Clock size={20} color="#FF8A00" />
+                  <Clock size={20} color="#4F46E5" />
                   <Text style={styles.sectionTitle}>Recently Started</Text>
                 </View>
                 <FlatList

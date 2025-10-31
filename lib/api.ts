@@ -1,5 +1,5 @@
 // API service layer for Chatt app
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5001/api';
 
 export interface StreamData {
   userId: string;
@@ -79,7 +79,6 @@ class ChattAPI {
         },
         body: JSON.stringify(streamData),
       });
-      return await response.json();
       return await response.json();
     } catch (error) {
       console.error('Start stream failed:', error);

@@ -97,9 +97,21 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Settings', headerTintColor: '#fff', headerStyle: { backgroundColor: '#0b0b0d' }, headerBackTitle: 'Back' }} />
+      <Stack.Screen 
+        options={{ 
+          title: 'Settings', 
+          headerTintColor: '#fff', 
+          headerStyle: { backgroundColor: '#0b0b0d' }, 
+          headerBackTitle: 'Back',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          )
+        }} 
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        <LinearGradient colors={["#FF8A00", "#FF6A00"]} style={styles.hero}>
+        <LinearGradient colors={["#4F46E5", "#3730A3"]} style={styles.hero}>
           <Text style={styles.heroTitle}>Settings</Text>
           <Text style={styles.heroSubtitle}>Personalize your experience</Text>
         </LinearGradient>
@@ -124,12 +136,12 @@ export default function SettingsScreen() {
           {open.chat && (
             <View>
               <View style={styles.row}>
-                {['#FF8A00','#10B981','#3B82F6','#F59E0B','#EF4444','#8B5CF6'].map((c) => (
+                {['#4F46E5','#10B981','#3B82F6','#F59E0B','#8B5CF6','#EF4444'].map((c) => (
                   <TouchableOpacity key={c} style={[styles.colorSwatch, { backgroundColor: c }, local.primaryColor === c && styles.colorSwatchActive]} onPress={() => setLocal({ ...local, primaryColor: c })} testID={`color-${c}`} />
                 ))}
               </View>
               <View style={[styles.row, { marginTop: 8 }]}>
-                {['#FF6A00','#059669','#2563EB','#D97706','#DC2626','#7C3AED'].map((c) => (
+                {['#3730A3','#059669','#2563EB','#D97706','#7C3AED','#DC2626'].map((c) => (
                   <TouchableOpacity key={c} style={[styles.colorSwatch, { backgroundColor: c }, local.secondaryColor === c && styles.colorSwatchActive]} onPress={() => setLocal({ ...local, secondaryColor: c })} testID={`color2-${c}`} />
                 ))}
               </View>

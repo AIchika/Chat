@@ -49,7 +49,18 @@ export default function EditProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Edit Profile', headerTintColor: '#fff', headerStyle: { backgroundColor: '#0b0b0d' } }} />
+      <Stack.Screen 
+        options={{ 
+          title: 'Edit Profile', 
+          headerTintColor: '#fff', 
+          headerStyle: { backgroundColor: '#0b0b0d' },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 10 }}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          )
+        }} 
+      />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
           <LinearGradient colors={["#FF8A00", "#FF6A00"]} style={styles.banner}>
@@ -87,7 +98,7 @@ export default function EditProfileScreen() {
           </View>
 
           <TouchableOpacity onPress={onSave} activeOpacity={0.85} testID="save-profile">
-            <LinearGradient colors={["#FF8A00", "#FF6A00"]} style={styles.saveButton} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+            <LinearGradient colors={["#4F46E5", "#3730A3"]} style={styles.saveButton} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
               <Text style={styles.saveText}>Save</Text>
             </LinearGradient>
           </TouchableOpacity>

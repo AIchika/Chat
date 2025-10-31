@@ -121,7 +121,10 @@ export default function ProfileScreen() {
           <View style={styles.header}>
             <Image source={{ uri: profileBackgroundUrl ?? 'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=2000&auto=format&fit=crop' }} style={styles.headerBg} />
             <View style={styles.headerActions}>
-              <TouchableOpacity style={[styles.headerButton, { marginRight: 'auto' }]} onPress={() => router.push('/profile/edit')} testID="edit-profile">
+              <TouchableOpacity style={styles.headerButton} onPress={() => router.back()} testID="back-button">
+                <X size={20} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.headerButton, { marginLeft: 'auto' }]} onPress={() => router.push('/profile/edit')} testID="edit-profile">
                 <Edit size={20} color="#fff" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton} onPress={() => router.push('/settings')} testID="open-settings">

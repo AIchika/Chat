@@ -1,5 +1,7 @@
 import createContextHook from "@nkzw/create-context-hook";
 import { useState, useEffect } from "react";
+import chattSocket from "@/lib/socket";
+import { useAuth } from "./AuthProvider";
 
 interface Message {
   id: string;
@@ -10,68 +12,35 @@ interface Message {
 
 export const [ChatProvider, useChat] = createContextHook(() => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // Simulate incoming messages
-    const mockMessages: Message[] = [
-      {
-        id: "1",
-        username: "User123",
-        text: "Hey everyone! 👋",
-        timestamp: new Date(),
-      },
-      {
-        id: "2",
-        username: "StreamFan",
-        text: "This stream is awesome!",
-        timestamp: new Date(),
-      },
-      {
-        id: "3",
-        username: "Viewer456",
-        text: "First time here, loving the content",
-        timestamp: new Date(),
-      },
-    ];
-    setMessages(mockMessages);
-
-    // Simulate random incoming messages
-    const interval = setInterval(() => {
-      const randomMessages = [
-        "Great stream!",
-        "Hello from Brazil 🇧🇷",
-        "Can you play my favorite song?",
-        "Love the energy!",
-        "Keep it up!",
-        "🔥🔥🔥",
-        "Amazing content",
-        "Following now!",
-      ];
-      
-      const randomUsername = `User${Math.floor(Math.random() * 1000)}`;
-      const randomText = randomMessages[Math.floor(Math.random() * randomMessages.length)];
-      
+    const handleNewMessage = (data: { userId: string; message: string; timestamp: Date }) => {
       const newMessage: Message = {
         id: Date.now().toString(),
-        username: randomUsername,
-        text: randomText,
-        timestamp: new Date(),
+        username: data.userId,
+        text: data.message,
+        timestamp: new Date(data.timestamp),
       };
-      
-      setMessages((prev) => [...prev, newMessage].slice(-50)); // Keep last 50 messages
-    }, 5000);
+      setMessages((prev) => [...prev, newMessage].slice(-100));
+    };
 
-    return () => clearInterval(interval);
+    chattSocket.on('new-chat-message', handleNewMessage as any);
+    return () => {
+      chattSocket.off('new-chat-message', handleNewMessage as any);
+    };
   }, []);
 
-  const sendMessage = (text: string) => {
+  const sendMessage = (streamId: string, text: string, userId?: string) => {
+    const uid = userId || user?.id || 'You';
+    chattSocket.sendChatMessage(streamId, uid, text);
     const newMessage: Message = {
       id: Date.now().toString(),
-      username: "You",
+      username: uid,
       text,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage].slice(-100));
   };
 
   return {

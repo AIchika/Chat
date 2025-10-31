@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Chatt",
+    "name": "",
     "slug": "chatt",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -56,7 +56,9 @@
         {
           "initialOrientation": "DEFAULT"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

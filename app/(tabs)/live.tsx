@@ -292,8 +292,8 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   sourceOptionActive: {
-    backgroundColor: "rgba(255, 138, 0, 0.15)",
-    borderColor: "#FF8A00",
+    backgroundColor: "rgba(79, 70, 229, 0.15)",
+    borderColor: "#4F46E5",
   },
   sourceText: {
     color: "#888",
@@ -334,15 +334,15 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   categoryChipActive: {
-    backgroundColor: "rgba(255, 138, 0, 0.15)",
-    borderColor: "#FF8A00",
+    backgroundColor: "rgba(79, 70, 229, 0.15)",
+    borderColor: "#4F46E5",
   },
   categoryChipText: {
     color: "#888",
     fontSize: 14,
   },
   categoryChipTextActive: {
-    color: "#FF8A00",
+    color: "#4F46E5",
   },
   coHostHeader: {
     flexDirection: "row",
@@ -377,13 +377,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   copyButton: {
-    backgroundColor: "rgba(255, 138, 0, 0.15)",
+    backgroundColor: "rgba(79, 70, 229, 0.15)",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
   },
   copyButtonText: {
-    color: "#FF8A00",
+    color: "#4F46E5",
     fontSize: 14,
     fontWeight: "600",
   },

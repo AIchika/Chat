@@ -5,15 +5,27 @@ const helmet = require('helmet');
 const http = require('http');
 const socketIo = require('socket.io');
 const dotenv = require('dotenv');
+const compression = require('compression');
+const morgan = require('morgan');
+const livekitRouter = require('./routes/livekit');
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// Allow both common dev origins (Expo web and Vite) plus configured FRONTEND_URL
+const defaultOrigin = 'http://localhost:8081';
+const allowedOrigins = Array.from(new Set([
+  process.env.FRONTEND_URL || defaultOrigin,
+  defaultOrigin,
+  'http://localhost:5173'
+]));
+
 const io = socketIo(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:8081",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }
@@ -22,10 +34,13 @@ const io = socketIo(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:8081",
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
+app.use(compression());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use('/api/livekit', livekitRouter);
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chatt-app', {
@@ -107,33 +122,33 @@ io.on('connection', (socket) => {
     console.log(`👋 User ${userId} left stream ${streamId}`);
   });
 
-  // WebRTC signaling events
+  // Chat
+  socket.on('chat-message', (data) => {
+    const { streamId, userId, message, timestamp } = data;
+    io.to(streamId).emit('new-chat-message', { userId, message, timestamp });
+    console.log(`💬 Chat message from ${userId} in stream ${streamId}: ${message}`);
+  });
+
+  // WebRTC signaling
   socket.on('webrtc-offer', (data) => {
     const { streamId, offer, fromUserId, toUserId } = data;
     socket.to(streamId).emit('webrtc-offer', { offer, fromUserId, toUserId });
-    console.log(`📡 WebRTC offer from ${fromUserId} to ${toUserId} in stream ${streamId}`);
+    console.log(`📡 WebRTC offer in stream ${streamId} from ${fromUserId} to ${toUserId}`);
   });
 
   socket.on('webrtc-answer', (data) => {
     const { streamId, answer, fromUserId, toUserId } = data;
     socket.to(streamId).emit('webrtc-answer', { answer, fromUserId, toUserId });
-    console.log(`📡 WebRTC answer from ${fromUserId} to ${toUserId} in stream ${streamId}`);
+    console.log(`📡 WebRTC answer in stream ${streamId} from ${fromUserId} to ${toUserId}`);
   });
 
   socket.on('webrtc-ice-candidate', (data) => {
     const { streamId, candidate, fromUserId, toUserId } = data;
     socket.to(streamId).emit('webrtc-ice-candidate', { candidate, fromUserId, toUserId });
-    console.log(`🧊 ICE candidate from ${fromUserId} to ${toUserId} in stream ${streamId}`);
+    console.log(`🧊 ICE candidate in stream ${streamId} from ${fromUserId} to ${toUserId}`);
   });
 
-  // Chat functionality
-  socket.on('chat-message', (data) => {
-    const { streamId, userId, message, timestamp } = data;
-    io.to(streamId).emit('new-chat-message', { userId, message, timestamp: timestamp || new Date() });
-    console.log(`💬 Chat message from ${userId} in stream ${streamId}: ${message}`);
-  });
-
-  // Live streaming controls
+  // Stream controls
   socket.on('stream-control', (data) => {
     const { streamId, controlType, value, userId } = data;
     io.to(streamId).emit('stream-control-update', { controlType, value, userId });
@@ -179,12 +194,26 @@ io.on('connection', (socket) => {
   });
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled server error:', err.stack || err);
+  res.status(err.status || 500).json({ error: 'Internal Server Error', message: err.message });
+});
+
+// Process-level error logging
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled Rejection:', reason);
+});
+
 const PORT = process.env.PORT || 5001;
 
 server.listen(PORT, () => {
   console.log(`🚀 Chatt Backend Server running on port ${PORT}`);
   console.log(`📡 Socket.io server ready for real-time connections`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8081'}`);
+  console.log(`🌐 Frontend URL(s): ${allowedOrigins.join(', ')}`);
   console.log(`🔌 WebRTC signaling ready for live streaming`);
   console.log(`💬 Real-time chat and interactions enabled`);
 });
