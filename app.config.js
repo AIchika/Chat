@@ -1,38 +1,44 @@
 module.exports = ({ config }) => ({
   ...config,
-  name: 'Chatt',
-  slug: 'chatt',
-  version: '1.0.0',
-  orientation: 'portrait',
-  icon: './assets/images/icon.png',
-  userInterfaceStyle: 'light',
+  name: "Chatt",
+  slug: "chatt",
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/images/icon.png",
+  userInterfaceStyle: "light",
   splash: {
-    image: './assets/images/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#ffffff'
+    image: "./assets/images/splash-icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff"
   },
-  assetBundlePatterns: [
-    '**/*'
-  ],
+  assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.chatt.app'
+    bundleIdentifier: "com.chatt.app"
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#ffffff'
+      foregroundImage: "./assets/images/adaptive-icon.png",
+      backgroundColor: "#ffffff"
     },
-    package: 'com.chatt.app'
+    package: "com.chatt.app"
   },
   web: {
-    favicon: './assets/images/favicon.png'
+    favicon: "./assets/images/favicon.png"
   },
   plugins: [
-    'expo-router'
+    "expo-router",
+    "expo-camera",
+    "expo-image-picker",
+    [
+      "expo-screen-orientation",
+      {
+        "initialOrientation": "DEFAULT"
+      }
+    ]
   ],
   experiments: {
     typedRoutes: true
   },
-  scheme: 'chatt'
+  scheme: "chatt"
 });
